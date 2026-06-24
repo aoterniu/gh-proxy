@@ -1,6 +1,6 @@
 /**
- * gh-proxy v3 — 全链路加速镜像站
- * 节点状态 · 统计 · 公益提示 · Release 列表 · 一键转换
+ * gh-proxy v4 — 对标 akams 设计
+ * 节点选择 · 测速 · 暗色/亮色 · 输入链接转换
  */
 
 const HOMEPAGE = `<!DOCTYPE html>
@@ -12,246 +12,197 @@ const HOMEPAGE = `<!DOCTYPE html>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;line-height:1.6}
-a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
-:root{--bg:#0d1117;--card:#161b22;--bdr:#30363d;--text:#c9d1d9;--sub:#8b949e;--blue:#58a6ff;--green:#3fb950;--purple:#bc8cff;--orange:#f78166;--accent:#58a6ff}
-.navbar{background:#161b22;border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:100;height:56px;display:flex;align-items:center;padding:0 24px}
-.navbar .logo{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:8px}
-.navbar .logo span{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.navbar .nav{margin-left:auto;display:flex;gap:18px;font-size:.88rem}
-.navbar .nav a{color:var(--sub);font-weight:500;padding:4px 0;border-bottom:2px solid transparent;transition:all .2s}
-.navbar .nav a:hover{color:var(--blue);border-bottom-color:var(--blue);text-decoration:none}
-.hero{background:linear-gradient(180deg,#161b22 0%,var(--bg) 100%);padding:60px 20px 40px;text-align:center}
-.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:12px;background:linear-gradient(135deg,var(--blue),var(--purple),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2}
-.hero .sub{font-size:1.1rem;color:var(--sub);margin-bottom:8px}
-.hero .tags{display:flex;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap}
-.hero .tag{background:#1f6feb22;color:var(--blue);font-size:.78rem;padding:4px 12px;border-radius:99px}
-.status-bar{background:#161b22;border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;justify-content:center;gap:32px;flex-wrap:wrap;font-size:.85rem}
-.status-bar .item{display:flex;align-items:center;gap:6px;color:var(--sub)}
-.status-bar .item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.status-bar .item .dot.green{background:var(--green);box-shadow:0 0 6px var(--green)}
-.status-bar .item b{color:var(--text);font-weight:600}
-.notice{background:#d2992222;border:1px solid #d2992244;color:#d29922;padding:10px 20px;text-align:center;font-size:.85rem;max-width:800px;margin:16px auto 0;border-radius:8px}
-.converter{max-width:720px;margin:0 auto;padding:0 20px 32px}
-.converter-box{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:20px}
-.converter-box h2{font-size:1rem;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.input-row{display:flex;gap:10px;margin-bottom:12px;position:relative}
-.input-row input{flex:1;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:12px 40px 12px 16px;color:var(--text);font-size:.95rem;outline:none;font-family:'JetBrains Mono',monospace;transition:border .2s}
-.input-row input:focus{border-color:var(--blue)}
-.input-row input::placeholder{color:#484f58}
-.input-row .go-btn{padding:12px 28px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem;transition:all .15s;white-space:nowrap}
-.input-row .go-btn:hover{opacity:.9;transform:translateY(-1px)}
-.input-row .go-btn:active{transform:scale(.97)}
-.input-row .clear-btn{position:absolute;right:140px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--sub);cursor:pointer;font-size:1.1rem;display:none;padding:4px 8px}
-.input-row .clear-btn.show{display:block}
-.hint{font-size:.78rem;color:#484f58;margin-top:8px}
-.result-box{display:none;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:14px;margin-top:12px}
+:root{--bg:#fff;--card:#f9fafb;--bdr:#e5e7eb;--text:#111827;--sub:#6b7280;--blue:#2563eb;--green:#16a34a;--purple:#7c3aed;--orange:#ea580c;--accent:#2563eb}
+[data-theme=dark]{--bg:#0d1117;--card:#161b22;--bdr:#30363d;--text:#e5e7eb;--sub:#9ca3af;--blue:#60a5fa;--green:#4ade80;--purple:#a78bfa;--orange:#fb923c;--accent:#60a5fa}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;transition:background .3s,color .3s}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+header{border-bottom:1px solid var(--bdr);height:64px;display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:100;background:var(--bg);transition:background .3s}
+header .logo{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:700;color:var(--text)}
+header .logo .icon{width:36px;height:36px;border-radius:8px;background:var(--text);display:flex;align-items:center;justify-content:center}
+header .logo .icon svg{width:22px;height:22px;fill:var(--bg)}
+header nav{margin-left:auto;display:flex;gap:20px;align-items:center}
+header nav a{color:var(--sub);font-weight:500;font-size:.9rem;transition:color .2s}
+header nav a:hover{color:var(--text);text-decoration:none}
+.theme-btn{background:var(--card);border:1px solid var(--bdr);border-radius:8px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:all .2s}
+.theme-btn:hover{border-color:var(--accent)}
+main{max-width:1000px;margin:0 auto;padding:60px 20px 40px}
+.hero{text-align:center;margin-bottom:40px}
+.hero h1{font-size:3rem;font-weight:800;margin-bottom:12px;color:var(--text)}
+.hero h1 span{color:var(--blue)}
+.hero p{color:var(--sub);font-size:1rem;max-width:600px;margin:0 auto}
+.input-area{margin-bottom:32px}
+.input-row{display:flex;gap:12px;margin-bottom:12px}
+.input-row input{flex:1;height:48px;padding:0 16px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;font-size:.95rem;color:var(--text);outline:none;font-family:inherit;transition:border .2s}
+.input-row input:focus{border-color:var(--blue);ring:2px var(--blue)}
+.input-row input::placeholder{color:var(--sub)}
+.input-row .go-btn{height:48px;padding:0 28px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem;transition:all .15s;white-space:nowrap}
+.input-row .go-btn:hover{opacity:.9}
+.input-row .go-btn:disabled{opacity:.5;cursor:not-allowed}
+.result-box{display:none;background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:16px;margin-top:16px}
 .result-box.show{display:block}
-.result-box .label{font-size:.78rem;color:var(--sub);margin-bottom:4px}
 .result-box .link-row{display:flex;gap:8px;align-items:center}
-.result-box .link-row input{flex:1;background:var(--card);border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;color:var(--green);font-size:.85rem;font-family:'JetBrains Mono',monospace}
-.result-box .link-row .copy-btn{padding:8px 16px;background:var(--green);color:var(--bg);border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:.82rem;transition:all .12s;white-space:nowrap}
+.result-box .link-row input{flex:1;height:40px;padding:0 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;font-size:.85rem;color:var(--green);font-family:'JetBrains Mono',monospace}
+.result-box .link-row .copy-btn{height:40px;padding:0 16px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:.82rem;transition:all .12s;white-space:nowrap}
 .result-box .link-row .copy-btn:active{transform:scale(.95)}
-.result-box .link-row .copy-btn.ok{background:#2ea043}
-.result-box .type-tag{display:inline-block;margin-bottom:8px;font-size:.72rem;padding:2px 10px;border-radius:99px;font-weight:600}
-.result-box .type-tag.github{background:#1f6feb22;color:var(--blue)}
-.result-box .type-tag.npm{background:#23863622;color:var(--green)}
-.result-box .type-tag.pypi{background:#d2992222;color:var(--orange)}
-.result-box .type-tag.clone{background:#8957e522;color:var(--purple)}
-.container{max-width:1000px;margin:0 auto;padding:0 20px 60px}
-.section-title{font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--bdr)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:20px;transition:border-color .2s,transform .15s}
-.card:hover{border-color:var(--blue);transform:translateY(-2px)}
-.card h3{font-size:1.05rem;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.card h3 .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
-.card p{color:var(--sub);font-size:.88rem;margin-bottom:12px}
-.code{background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--green);overflow-x:auto;cursor:pointer;position:relative;transition:border .2s}
-.code:hover{border-color:var(--blue)}
-.code::after{content:'📋';position:absolute;top:6px;right:8px;font-size:.75rem;opacity:.5}
+.result-box .link-row .copy-btn.ok{background:#15803d}
+.result-box .meta{display:flex;gap:16px;margin-top:10px;font-size:.82rem;color:var(--sub)}
+.result-box .meta .tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.72rem;font-weight:600}
+.result-box .meta .tag.github{background:#dbeafe;color:#2563eb}
+.result-box .meta .tag.npm{background:#dcfce7;color:#16a34a}
+.result-box .meta .tag.pypi{background:#ffedd5;color:#ea580c}
+.result-box .meta .tag.clone{background:#ede9fe;color:#7c3aed}
+.node-bar{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
+.node-bar label{font-size:.88rem;color:var(--sub);font-weight:500;white-space:nowrap}
+.node-bar select{height:40px;padding:0 12px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;font-size:.88rem;color:var(--text);cursor:pointer;min-width:200px}
+.node-bar .speed-btn{height:40px;padding:0 16px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;cursor:pointer;font-size:.85rem;color:var(--sub);display:flex;align-items:center;gap:6px;transition:all .15s}
+.node-bar .speed-btn:hover{border-color:var(--accent);color:var(--text)}
+.node-bar .speed-btn .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.node-bar .speed-btn.testing .dot{background:#fbbf24;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.stats{display:flex;gap:24px;flex-wrap:wrap;font-size:.85rem;color:var(--sub)}
+.stats .item b{color:var(--text);font-weight:600}
+.notice{background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:12px 16px;border-radius:8px;font-size:.85rem;margin-bottom:32px;display:flex;align-items:flex-start;gap:8px}
+.notice .icon{flex-shrink:0;font-size:1.1rem;margin-top:1px}
+[data-theme=dark] .notice{background:#422006;border-color:#854d0e;color:#fbbf24}
+.section-title{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:32px}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:16px;transition:border-color .2s,transform .15s;cursor:pointer}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card h3{font-size:.95rem;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card h3 .emoji{font-size:1.1rem}
+.card p{color:var(--sub);font-size:.82rem;margin-bottom:8px;line-height:1.5}
+.code{background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--green);overflow-x:auto;cursor:pointer;transition:border .2s;position:relative}
+.code:hover{border-color:var(--accent)}
+.code::after{content:'📋';position:absolute;top:4px;right:8px;font-size:.7rem;opacity:.4}
 .code:hover::after{opacity:1}
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:20px}
-.feature{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:16px;text-align:center}
-.feature .icon{font-size:1.6rem;margin-bottom:8px}
-.feature h4{font-size:.9rem;color:var(--text);margin-bottom:4px}
-.feature p{font-size:.78rem;color:var(--sub)}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:var(--bg);padding:10px 24px;border-radius:8px;font-size:.88rem;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 24px;border-radius:8px;font-size:.88rem;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
 .toast.show{opacity:1}
-footer{background:#161b22;border-top:1px solid var(--bdr);padding:40px 20px 24px;margin-top:40px}
-.footer-grid{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px}
-.footer-col h4{font-size:.88rem;color:var(--text);margin-bottom:12px}
-.footer-col a{display:block;color:var(--sub);font-size:.82rem;padding:3px 0;transition:color .15s}
-.footer-col a:hover{color:var(--blue);text-decoration:none}
-.footer-col p{color:var(--sub);font-size:.82rem;line-height:1.6}
-.footer-bottom{text-align:center;padding-top:24px;margin-top:24px;border-top:1px solid var(--bdr);color:#484f58;font-size:.75rem}
-@media(max-width:640px){.hero h1{font-size:1.7rem}.navbar{padding:0 12px}.navbar .nav{gap:12px;font-size:.8rem}.input-row{flex-direction:column}.grid{grid-template-columns:1fr}.container{padding:0 12px 40px}.status-bar{gap:16px;font-size:.78rem}.footer-grid{grid-template-columns:1fr 1fr}}
+footer{border-top:1px solid var(--bdr);padding:24px 20px;text-align:center;color:var(--sub);font-size:.78rem;margin-top:40px}
+footer a{color:var(--sub)}footer a:hover{color:var(--text)}
+footer .links{display:flex;justify-content:center;gap:16px;margin-bottom:8px}
+@media(max-width:640px){.hero h1{font-size:2rem}.input-row{flex-direction:column}.node-bar{flex-direction:column;align-items:stretch}.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<nav class="navbar">
-  <div class="logo">⚡ <span>gh 镜像加速</span></div>
-  <div class="nav">
-    <a href="#converter">转换</a>
-    <a href="#services">服务</a>
-    <a href="https://github.com/aoterniu/gh-proxy" target="_blank">GitHub</a>
+<header>
+  <div class="logo">
+    <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></div>
+    <span>GitHub Proxy</span>
+  </div>
+  <nav>
     <a href="https://blog.aoterniu.online" target="_blank">博客</a>
+    <a href="https://img.aoterniu.online" target="_blank">图床</a>
+    <button class="theme-btn" onclick="toggleTheme()" title="切换主题">🌓</button>
+  </nav>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>GitHub <span>Proxy</span></h1>
+    <p>支持 API、Git Clone、Releases、Archive、Raw、NPM、PyPI 等资源加速下载，提升开发体验。</p>
   </div>
-</nav>
 
-<div class="status-bar">
-  <div class="item"><span class="dot green"></span> 当前节点：<b>Cloudflare 全球节点</b> 🟢 正常</div>
-  <div class="item">延迟：<b id="latency">-</b></div>
-  <div class="item">今日加速：<b id="todayCount">-</b> 次</div>
-  <div class="item">累计加速：<b id="totalCount">-</b> 次</div>
-</div>
-
-<div class="hero">
-  <h1>全链路加速镜像站</h1>
-  <p class="sub">GitHub · NPM · PyPI · 一行命令加速你的开发</p>
-  <div class="tags">
-    <span class="tag">⚡ 全球 CDN</span>
-    <span class="tag">🔒 安全可靠</span>
-    <span class="tag">🆓 完全免费</span>
-    <span class="tag">📦 多协议支持</span>
-  </div>
-</div>
-
-<div class="notice">
-  ⚠️ 公益服务，请勿滥用。加速资源来自 Cloudflare 免费额度，感谢支持！如遇问题请反馈至 GitHub Issues。
-</div>
-
-<div class="converter" id="converter">
-  <div class="converter-box">
-    <h2>🔗 链接一键转换</h2>
+  <div class="input-area">
     <div class="input-row">
-      <input type="text" id="linkInput" placeholder="粘贴 GitHub / NPM / PyPI 链接..." oninput="toggleClear()" onkeydown="if(event.key==='Enter')convertLink()">
-      <button class="clear-btn" id="clearBtn" onclick="clearInput()">✕</button>
-      <button class="go-btn" onclick="convertLink()">加速 →</button>
+      <input type="text" id="linkInput" placeholder="输入 Github 文件链接" oninput="onInput()" onkeydown="if(event.key==='Enter')convertLink()">
+      <button class="go-btn" id="goBtn" onclick="convertLink()" disabled>Go</button>
     </div>
-    <div class="hint">支持：GitHub 文件 / Release / API / Clone · NPM 包 · PyPI 包 · 任意 GitHub 链接</div>
     <div class="result-box" id="resultBox">
-      <span class="type-tag" id="typeTag"></span>
-      <div class="label" id="resultLabel">加速链接</div>
       <div class="link-row">
         <input type="text" id="resultLink" readonly>
         <button class="copy-btn" id="copyBtn" onclick="copyResult()">复制</button>
       </div>
+      <div class="meta">
+        <span class="tag" id="typeTag"></span>
+        <span id="resultDesc"></span>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="container" id="services">
-  <h2 class="section-title">支持的服务</h2>
-  <div class="grid">
-    <div class="card">
-      <h3><span class="icon" style="background:#23863622">📦</span> NPM 镜像</h3>
-      <p>替代 registry.npmjs.org，国内极速安装</p>
-      <div class="code">npm config set registry https://gh.aoterniu.online/npm/</div>
-      <div class="code" style="margin-top:8px">yarn config set registry https://gh.aoterniu.online/npm/</div>
-    </div>
-    <div class="card">
-      <h3><span class="icon" style="background:#d2992222">🐍</span> PyPI 镜像</h3>
-      <p>替代 pypi.org，Python 包极速安装</p>
-      <div class="code">pip install -i https://gh.aoterniu.online/pypi/simple/ requests</div>
-      <div class="code" style="margin-top:8px">pip config set global.index-url https://gh.aoterniu.online/pypi/simple/</div>
-    </div>
-    <div class="card">
-      <h3><span class="icon" style="background:#1f6feb22">📄</span> GitHub Raw 加速</h3>
-      <p>加速 raw.githubusercontent.com 文件访问</p>
-      <div class="code">https://gh.aoterniu.online/raw/user/repo/branch/path</div>
-    </div>
-    <div class="card">
-      <h3><span class="icon" style="background:#8957e522">⬇️</span> Release 下载加速</h3>
-      <p>加速 GitHub Release 文件下载</p>
-      <div class="code">https://gh.aoterniu.online/release/user/repo/releases/download/tag/file</div>
-    </div>
-    <div class="card">
-      <h3><span class="icon" style="background:#f7816622">🔗</span> GitHub API 加速</h3>
-      <p>加速 api.github.com 请求</p>
-      <div class="code">https://gh.aoterniu.online/api/repos/user/repo</div>
-    </div>
-    <div class="card">
-      <h3><span class="icon" style="background:#3fb95022">🔀</span> Git Clone 加速</h3>
-      <p>加速 git clone 操作</p>
-      <div class="code">git clone https://gh.aoterniu.online/clone/user/repo</div>
+  <div class="node-bar">
+    <label>节点选择：</label>
+    <select id="nodeSelect">
+      <option value="gh.aoterniu.online" selected>gh.aoterniu.online（默认）</option>
+    </select>
+    <button class="speed-btn" id="speedBtn" onclick="testSpeed()">
+      <span class="dot"></span>
+      <span>节点测速</span>
+    </button>
+    <div class="stats">
+      <div class="item">今日: <b id="todayCount">-</b></div>
+      <div class="item">累计: <b id="totalCount">-</b></div>
     </div>
   </div>
-  <div class="features" style="margin-top:32px">
-    <div class="feature"><div class="icon">⚡</div><h4>全球 CDN</h4><p>Cloudflare 边缘节点加速</p></div>
-    <div class="feature"><div class="icon">🔒</div><h4>安全可靠</h4><p>全程 HTTPS 加密传输</p></div>
-    <div class="feature"><div class="icon">🆓</div><h4>完全免费</h4><p>公益项目，永久免费使用</p></div>
-    <div class="feature"><div class="icon">📦</div><h4>多协议支持</h4><p>HTTP/HTTPS/Git 协议全覆盖</p></div>
-  </div>
-</div>
 
-<div class="toast" id="toast">✅ 已复制到剪贴板</div>
+  <div class="notice">
+    <span class="icon">⚠️</span>
+    <div>公益加速服务，请勿滥用。加速资源来自热心网友贡献，请合理使用。如遇问题请反馈至 <a href="https://github.com/aoterniu/gh-proxy/issues" target="_blank">GitHub Issues</a>。</div>
+  </div>
+
+  <h2 class="section-title">使用方式</h2>
+  <div class="grid" id="cards"></div>
+</main>
+
+<div class="toast" id="toast"></div>
 
 <footer>
-  <div class="footer-grid">
-    <div class="footer-col">
-      <h4>gh 镜像加速</h4>
-      <p>全链路开发加速服务，支持 GitHub、NPM、PyPI 等资源加速。基于 Cloudflare Workers 构建，全球 CDN 加速。</p>
-    </div>
-    <div class="footer-col">
-      <h4>友情链接</h4>
-      <a href="https://blog.aoterniu.online" target="_blank">ao 技术笔记</a>
-      <a href="https://img.aoterniu.online" target="_blank">ao 图床</a>
-    </div>
-    <div class="footer-col">
-      <h4>相关资源</h4>
-      <a href="https://github.com/aoterniu/gh-proxy" target="_blank">GitHub 仓库</a>
-      <a href="https://developers.cloudflare.com/workers/" target="_blank">Cloudflare Workers</a>
-      <a href="https://github.com" target="_blank">GitHub</a>
-    </div>
-    <div class="footer-col">
-      <h4>免责声明</h4>
-      <p>本服务为公益项目，仅供学习交流使用。请勿用于非法用途。加速资源版权归原作者所有。</p>
-    </div>
+  <div class="links">
+    <a href="https://github.com/aoterniu/gh-proxy" target="_blank">GitHub</a>
+    <a href="https://blog.aoterniu.online" target="_blank">技术笔记</a>
+    <a href="https://img.aoterniu.online" target="_blank">图床</a>
   </div>
-  <div class="footer-bottom">
-    gh 镜像加速 · gh.aoterniu.online · Powered by Cloudflare Workers · 公益免费 © 2026
-  </div>
+  gh 镜像加速 · gh.aoterniu.online · Powered by Cloudflare Workers · 公益免费 © 2026
 </footer>
 
 <script>
-function $$(s){return document.querySelector(s)}
-const $=$$;
+const $=s=>document.querySelector(s);
+let currentDomain='gh.aoterniu.online';
 
-// 链接一键转换
+// 主题切换
+const prefersDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+const savedTheme=localStorage.getItem('gh-theme');
+document.documentElement.setAttribute('data-theme',savedTheme||(prefersDark?'dark':'light'));
+function toggleTheme(){
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('gh-theme',t);
+}
+
+// 输入处理
+function onInput(){
+  const v=$('#linkInput').value.trim();
+  $('#goBtn').disabled=!v;
+}
+
+// 链接转换
 function convertLink(){
   const input=$('#linkInput').value.trim();
-  if(!input){showToast('请粘贴链接');return}
+  if(!input){showToast('请输入链接');return}
   const result=parseLink(input);
-  if(!result){showToast('无法识别该链接，请检查格式');return}
+  if(!result){showToast('无法识别该链接');return}
   $('#resultBox').classList.add('show');
-  const tag=$('#typeTag');tag.textContent=result.tag;tag.className='type-tag '+result.tagClass;
-  $('#resultLabel').textContent=result.desc;
   $('#resultLink').value=result.url;
-  // 统计
+  const tag=$('#typeTag');tag.textContent=result.tag;tag.className='tag '+result.tagClass;
+  $('#resultDesc').textContent=result.desc;
   fetch('/api/stats/increment',{method:'POST'}).catch(()=>{});
+  loadStats();
 }
 
 function parseLink(input){
   const s=input.replace(/^https?:\\/\\//,'').replace(/www\\./,'');
-  if(s.startsWith('raw.githubusercontent.com/')){
-    const path=s.replace('raw.githubusercontent.com/','');
-    return{url:'https://gh.aoterniu.online/raw/'+path,tag:'GitHub Raw',tagClass:'github',desc:'Raw 文件加速链接'};
-  }
-  const blobMatch=s.match(/^github\\.com\\/([^/]+)\\/([^/]+)\\/blob\\/([^/]+)\\/(.+)$/);
-  if(blobMatch)return{url:'https://gh.aoterniu.online/raw/'+blobMatch[1]+'/'+blobMatch[2]+'/'+blobMatch[3]+'/'+blobMatch[4],tag:'GitHub Raw',tagClass:'github',desc:'文件加速链接'};
-  const releaseMatch=s.match(/^github\\.com\\/([^/]+)\\/([^/]+)\\/releases\\/download\\/(.+)$/);
-  if(releaseMatch)return{url:'https://gh.aoterniu.online/release/'+releaseMatch[1]+'/'+releaseMatch[2]+'/releases/download/'+releaseMatch[3],tag:'Release',tagClass:'github',desc:'Release 下载加速链接'};
-  if(s.startsWith('api.github.com/')){const path=s.replace('api.github.com/','');return{url:'https://gh.aoterniu.online/api/'+path,tag:'GitHub API',tagClass:'github',desc:'API 加速链接'}}
-  if(s.includes('registry.npmjs.org')){const path=s.replace(/.*registry\\.npmjs\\.org/,'');return{url:'https://gh.aoterniu.online/npm/'+path,tag:'NPM',tagClass:'npm',desc:'NPM 镜像链接'}}
-  const npmPkg=s.match(/(?:www\\.)?npmjs\\.com\\/package\\/([^/]+)/);
-  if(npmPkg)return{url:'https://gh.aoterniu.online/npm/'+npmPkg[1],tag:'NPM',tagClass:'npm',desc:'NPM 包镜像链接'};
-  const pypiPkg=s.match(/pypi\\.org\\/project\\/([^/]+)/);
-  if(pypiPkg)return{url:'https://gh.aoterniu.online/pypi/simple/'+pypiPkg[1]+'/',tag:'PyPI',tagClass:'pypi',desc:'PyPI 镜像链接'};
-  const cloneMatch=s.match(/^github\\.com\\/([^/]+)\\/([^/]+)\\/?$/);
-  if(cloneMatch)return{url:'https://gh.aoterniu.online/clone/'+cloneMatch[1]+'/'+cloneMatch[2],tag:'Git Clone',tagClass:'clone',desc:'Git Clone 加速链接'};
-  const pagesMatch=s.match(/^([^.]+)\\.github\\.io\\/([^/]+)\\/?(.*)$/);
-  if(pagesMatch)return{url:'https://gh.aoterniu.online/pages/'+pagesMatch[1]+'/'+pagesMatch[2]+'/'+(pagesMatch[3]||''),tag:'GitHub Pages',tagClass:'github',desc:'Pages 加速链接'};
-  if(s.startsWith('github.com/')){const path=s.replace('github.com/','');return{url:'https://gh.aoterniu.online/'+path,tag:'GitHub',tagClass:'github',desc:'GitHub 加速链接'}}
+  const host=currentDomain;
+  if(s.startsWith('raw.githubusercontent.com/')){return{url:'https://'+host+'/raw/'+s.replace('raw.githubusercontent.com/',''),tag:'GitHub Raw',tagClass:'github',desc:'Raw 文件加速链接'}}
+  const blob=s.match(/^github\\.com\\/([^/]+)\\/([^/]+)\\/blob\\/([^/]+)\\/(.+)$/);
+  if(blob)return{url:'https://'+host+'/raw/'+blob[1]+'/'+blob[2]+'/'+blob[3]+'/'+blob[4],tag:'GitHub Raw',tagClass:'github',desc:'文件加速链接'};
+  const rel=s.match(/^github\\.com\\/([^/]+)\\/([^/]+)\\/releases\\/download\\/(.+)$/);
+  if(rel)return{url:'https://'+host+'/release/'+rel[1]+'/'+rel[2]+'/releases/download/'+rel[3],tag:'Release',tagClass:'github',desc:'Release 下载加速链接'};
+  if(s.startsWith('api.github.com/'))return{url:'https://'+host+'/api/'+s.replace('api.github.com/',''),tag:'GitHub API',tagClass:'github',desc:'API 加速链接'};
+  if(s.includes('registry.npmjs.org'))return{url:'https://'+host+'/npm/'+s.replace(/.*registry\\.npmjs\\.org/,''),tag:'NPM',tagClass:'npm',desc:'NPM 镜像链接'};
+  const npm=s.match(/npmjs\\.com\\/package\\/([^/]+)/);if(npm)return{url:'https://'+host+'/npm/'+npm[1],tag:'NPM',tagClass:'npm',desc:'NPM 包镜像'};
+  const pypi=s.match(/pypi\\.org\\/project\\/([^/]+)/);if(pypi)return{url:'https://'+host+'/pypi/simple/'+pypi[1]+'/',tag:'PyPI',tagClass:'pypi',desc:'PyPI 包镜像'};
+  const clone=s.match(/^github\\.com\\/([^/]+)\\/([^/]+)\\/?$/);if(clone)return{url:'https://'+host+'/clone/'+clone[1]+'/'+clone[2],tag:'Git Clone',tagClass:'clone',desc:'Git Clone 加速'};
+  if(s.startsWith('github.com/'))return{url:'https://'+host+'/'+s.replace('github.com/',''),tag:'GitHub',tagClass:'github',desc:'GitHub 加速'};
   return null;
 }
 
@@ -263,156 +214,45 @@ function copyResult(){
 }
 
 function copyText(el){
-  const text=el.textContent.replace(/[\\u200B-\\u200D\\uFEFF]/g,'').replace(/📋$/,'').trim();
-  navigator.clipboard.writeText(text).then(()=>{showToast('✅ 已复制到剪贴板');el.style.borderColor='var(--green)';setTimeout(()=>el.style.borderColor='',1000)});
+  navigator.clipboard.writeText(el.textContent.replace(/📋$/,'').trim()).then(()=>{
+    showToast('✅ 已复制到剪贴板');el.style.borderColor='var(--green)';setTimeout(()=>el.style.borderColor='',1000);
+  });
 }
 
-function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
-function toggleClear(){const v=$('#linkInput').value;$('#clearBtn').classList.toggle('show',v.length>0)}
-function clearInput(){$('#linkInput').value='';$('#resultBox').classList.remove('show');$('#clearBtn').classList.remove('show');$('#linkInput').focus()}
+function showToast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
 
-// 节点延迟测速
-async function measureLatency(){
+// 节点测速
+async function testSpeed(){
+  const btn=$('#speedBtn');btn.classList.add('testing');btn.querySelector('span:last-child').textContent='测速中...';
   const start=performance.now();
-  try{await fetch('/api/ping',{method:'GET',cache:'no-store'});const latency=Math.round(performance.now()-start);$('#latency').textContent=latency+'ms'}
-  catch{$('#latency').textContent='超时'}
+  try{await fetch('/api/ping',{cache:'no-store'});const ms=Math.round(performance.now()-start);
+    btn.querySelector('span:last-child').textContent='延迟 '+ms+'ms';btn.classList.remove('testing');
+    setTimeout(()=>btn.querySelector('span:last-child').textContent='节点测速',3000);
+  }catch{btn.querySelector('span:last-child').textContent='超时';btn.classList.remove('testing');setTimeout(()=>btn.querySelector('span:last-child').textContent='节点测速',3000)}
 }
 
-// 加载统计数据
-async function loadStats(){
-  try{const r=await fetch('/api/stats');const d=await r.json();$('#todayCount').textContent=d.today||0;$('#totalCount').textContent=d.total||0}
-  catch{$('#todayCount').textContent='-';$('#totalCount').textContent='-'}
-}
+// 统计
+async function loadStats(){try{const d=await(await fetch('/api/stats')).json();$('#todayCount').textContent=d.today||0;$('#totalCount').textContent=d.total||0}catch{}}
 
-document.querySelectorAll('.code').forEach(el=>el.addEventListener('click',()=>copyText(el)));
-measureLatency();loadStats();
-setInterval(loadStats,60000);
+// 卡片数据
+const cards=[
+  {emoji:'📦',title:'NPM 镜像',desc:'替代 registry.npmjs.org',code:'npm config set registry https://gh.aoterniu.online/npm/'},
+  {emoji:'🐍',title:'PyPI 镜像',desc:'替代 pypi.org',code:'pip config set global.index-url https://gh.aoterniu.online/pypi/simple/'},
+  {emoji:'📄',title:'GitHub Raw',desc:'raw.githubusercontent.com 加速',code:'https://gh.aoterniu.online/raw/user/repo/branch/path'},
+  {emoji:'⬇️',title:'Release 下载',desc:'GitHub Release 文件加速',code:'https://gh.aoterniu.online/release/user/repo/releases/download/tag/file'},
+  {emoji:'🔗',title:'GitHub API',desc:'api.github.com 加速',code:'https://gh.aoterniu.online/api/repos/user/repo'},
+  {emoji:'🔀',title:'Git Clone',desc:'git clone 加速',code:'git clone https://gh.aoterniu.online/clone/user/repo'},
+];
+$('#cards').innerHTML=cards.map(c=>'<div class="card"><h3><span class="emoji">'+c.emoji+'</span>'+c.title+'</h3><p>'+c.desc+'</p><div class="code" onclick="copyText(this)">'+c.code+'</div></div>').join('');
+
+loadStats();
 </script>
 </body>
 </html>`;
 
-function cors(origin) {
-  return { 'Access-Control-Allow-Origin': origin || '*', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers': '*' };
-}
+function cors(origin){return{'Access-Control-Allow-Origin':origin||'*','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Access-Control-Allow-Headers':'*'}}
+async function proxyUpstream(url,request,extraHeaders={}){const headers=new Headers();for(const[key,value]of request.headers){if(!['host','origin','referer'].includes(key.toLowerCase()))headers.set(key,value)}Object.entries(extraHeaders).forEach(([k,v])=>headers.set(k,v));const response=await fetch(new Request(url,{method:request.method,headers,body:request.method!=='GET'&&request.method!=='HEAD'?request.body:undefined}));const rh=new Headers(response.headers);rh.set('Access-Control-Allow-Origin','*');rh.set('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');rh.set('Access-Control-Allow-Headers','*');return new Response(response.body,{status:response.status,statusText:response.statusText,headers:rh})}
+async function incrementStats(env){try{const today=new Date().toISOString().slice(0,10);const t=parseInt(await env.STATS.get('total')||'0')+1;const d=parseInt(await env.STATS.get('day_'+today)||'0')+1;await Promise.all([env.STATS.put('total',String(t)),env.STATS.put('day_'+today,String(d))])}catch(e){}}
+async function getStats(env){try{const today=new Date().toISOString().slice(0,10);return{total:parseInt(await env.STATS.get('total')||'0'),today:parseInt(await env.STATS.get('day_'+today)||'0')}}catch{return{total:0,today:0}}}
 
-async function proxyUpstream(url, request, extraHeaders = {}) {
-  const headers = new Headers();
-  for (const [key, value] of request.headers) {
-    if (!['host', 'origin', 'referer'].includes(key.toLowerCase())) headers.set(key, value);
-  }
-  Object.entries(extraHeaders).forEach(([k, v]) => headers.set(k, v));
-  const response = await fetch(new Request(url, { method: request.method, headers, body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined }));
-  const responseHeaders = new Headers(response.headers);
-  responseHeaders.set('Access-Control-Allow-Origin', '*');
-  responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  responseHeaders.set('Access-Control-Allow-Headers', '*');
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: responseHeaders });
-}
-
-// 统计 KV
-async function incrementStats(env) {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    const total = parseInt(await env.STATS.get('total') || '0') + 1;
-    const todayCount = parseInt(await env.STATS.get('day_' + today) || '0') + 1;
-    await Promise.all([env.STATS.put('total', String(total)), env.STATS.put('day_' + today, String(todayCount))]);
-  } catch (e) {}
-}
-
-async function getStats(env) {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    return { total: parseInt(await env.STATS.get('total') || '0'), today: parseInt(await env.STATS.get('day_' + today) || '0') };
-  } catch { return { total: 0, today: 0 }; }
-}
-
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    const origin = request.headers.get('Origin') || '*';
-    const path = url.pathname;
-
-    if (request.method === 'OPTIONS') return new Response(null, { headers: cors(origin) });
-
-    // 首页
-    if (path === '/' || path === '') return new Response(HOMEPAGE, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
-
-    // Ping（延迟测试）
-    if (path === '/api/ping') return Response.json({ ok: true, timestamp: Date.now() }, { headers: cors(origin) });
-
-    // 统计接口
-    if (path === '/api/stats' && request.method === 'GET') {
-      const s = await getStats(env);
-      return Response.json(s, { headers: cors(origin) });
-    }
-
-    // 统计递增
-    if (path === '/api/stats/increment' && request.method === 'POST') {
-      await incrementStats(env);
-      return Response.json({ ok: true }, { headers: cors(origin) });
-    }
-
-    // NPM 镜像
-    if (path.startsWith('/npm/')) {
-      await incrementStats(env);
-      return proxyUpstream(`https://registry.npmmirror.com${path.slice(4)}${url.search}`, request);
-    }
-
-    // PyPI 镜像
-    if (path.startsWith('/pypi/')) {
-      await incrementStats(env);
-      return proxyUpstream(`https://mirrors.aliyun.com/pypi${path.slice(5)}${url.search}`, request);
-    }
-
-    // GitHub Raw
-    if (path.startsWith('/raw/')) {
-      await incrementStats(env);
-      return proxyUpstream(`https://raw.githubusercontent.com/${path.slice(5)}${url.search}`, request);
-    }
-
-    // GitHub Release
-    if (path.startsWith('/release/')) {
-      await incrementStats(env);
-      return proxyUpstream(`https://github.com/${path.slice(9)}${url.search}`, request, { 'User-Agent': 'Mozilla/5.0' });
-    }
-
-    // GitHub API
-    if (path.startsWith('/api/') && !path.startsWith('/api/ping') && !path.startsWith('/api/stats')) {
-      await incrementStats(env);
-      return proxyUpstream(`https://api.github.com/${path.slice(5)}${url.search}`, request, { 'User-Agent': 'gh-proxy/1.0', 'Accept': 'application/vnd.github.v3+json' });
-    }
-
-    // Git Clone
-    if (path.startsWith('/clone/')) {
-      await incrementStats(env);
-      const gitPath = path.slice(7).endsWith('.git') ? path.slice(7) : path.slice(7) + '.git';
-      return proxyUpstream(`https://github.com/${gitPath}${url.search}`, request, { 'User-Agent': 'git/2.40.0' });
-    }
-
-    // GitHub 网页
-    if (path.startsWith('/github.com/') || path.startsWith('/githubusercontent.com/')) {
-      const domain = path.startsWith('/github.com/') ? 'github.com' : 'raw.githubusercontent.com';
-      return proxyUpstream(`https://${domain}/${path.replace(`/${domain}/`, '')}${url.search}`, request, { 'User-Agent': 'Mozilla/5.0' });
-    }
-
-    // GitHub Pages
-    if (path.startsWith('/pages/')) {
-      const parts = path.slice(7).split('/');
-      if (parts.length >= 2) return proxyUpstream(`https://${parts[0]}.github.io/${parts[1]}/${parts.slice(2).join('/')}${url.search}`, request);
-    }
-
-    // 通用 GitHub 文件
-    if (path.match(/^\/[^\/]+\/[^\/]+\/(blob|raw)\/[^\/]+\/.*/)) {
-      const parts = path.slice(1).split('/');
-      const [user, repo, type, branch] = parts;
-      const filePath = parts.slice(4).join('/');
-      if (type === 'raw') await incrementStats(env);
-      const target = type === 'raw'
-        ? `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${filePath}${url.search}`
-        : `https://github.com/${user}/${repo}/blob/${branch}/${filePath}${url.search}`;
-      return proxyUpstream(target, request, type !== 'raw' ? { 'User-Agent': 'Mozilla/5.0' } : {});
-    }
-
-    return new Response(HOMEPAGE, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
-  }
-};
+export default{async fetch(request,env){const url=new URL(request.url);const origin=request.headers.get('Origin')||'*';const path=url.pathname;if(request.method==='OPTIONS')return new Response(null,{headers:cors(origin)});if(path==='/'||path==='')return new Response(HOMEPAGE,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}});if(path==='/api/ping')return Response.json({ok:true,timestamp:Date.now()},{headers:cors(origin)});if(path==='/api/stats'&&request.method==='GET'){const s=await getStats(env);return Response.json(s,{headers:cors(origin)})}if(path==='/api/stats/increment'&&request.method==='POST'){await incrementStats(env);return Response.json({ok:true},{headers:cors(origin)})}if(path.startsWith('/npm/')){await incrementStats(env);return proxyUpstream('https://registry.npmmirror.com'+path.slice(4)+url.search,request)}if(path.startsWith('/pypi/')){await incrementStats(env);return proxyUpstream('https://mirrors.aliyun.com/pypi'+path.slice(5)+url.search,request)}if(path.startsWith('/raw/')){await incrementStats(env);return proxyUpstream('https://raw.githubusercontent.com/'+path.slice(5)+url.search,request)}if(path.startsWith('/release/')){await incrementStats(env);return proxyUpstream('https://github.com/'+path.slice(9)+url.search,request,{'User-Agent':'Mozilla/5.0'})}if(path.startsWith('/api/')&&!path.startsWith('/api/ping')&&!path.startsWith('/api/stats')){await incrementStats(env);return proxyUpstream('https://api.github.com/'+path.slice(5)+url.search,request,{'User-Agent':'gh-proxy/1.0','Accept':'application/vnd.github.v3+json'})}if(path.startsWith('/clone/')){await incrementStats(env);const gp=path.slice(7).endsWith('.git')?path.slice(7):path.slice(7)+'.git';return proxyUpstream('https://github.com/'+gp+url.search,request,{'User-Agent':'git/2.40.0'})}if(path.startsWith('/github.com/')||path.startsWith('/githubusercontent.com/')){const d=path.startsWith('/github.com/')?'github.com':'raw.githubusercontent.com';return proxyUpstream('https://'+d+'/'+path.replace('/'+d+'/','')+url.search,request,{'User-Agent':'Mozilla/5.0'})}if(path.startsWith('/pages/')){const p=path.slice(7).split('/');if(p.length>=2)return proxyUpstream('https://'+p[0]+'.github.io/'+p[1]+'/'+p.slice(2).join('/')+url.search,request)}if(path.match(/^\/[^\/]+\/[^\/]+\/(blob|raw)\/[^\/]+\//)){const p=path.slice(1).split('/');const[u,r,t,b]=p;const f=p.slice(4).join('/');if(t==='raw')await incrementStats(env);const target=t==='raw'?'https://raw.githubusercontent.com/'+u+'/'+r+'/'+b+'/'+f+url.search:'https://github.com/'+u+'/'+r+'/blob/'+b+'/'+f+url.search;return proxyUpstream(target,request,t!=='raw'?{'User-Agent':'Mozilla/5.0'}:{})}return new Response(HOMEPAGE,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}})}};
