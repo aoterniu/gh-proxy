@@ -270,18 +270,19 @@ function copyCmd(id){
 }
 
 function parseLink(input){
-  const s=input.replace(new RegExp('^https?://'),'').replace('www.','');
+  const s=input.replace(/^https?:\/\//,'').replace(/www\./,'');
   const host=currentDomain;
+  // raw 字段 = 原始 GitHub URL，三个标签页统一用 /https://github.com/... 格式
   if(s.startsWith('raw.githubusercontent.com/')){return{url:'https://'+host+'/raw/'+s.replace('raw.githubusercontent.com/',''),raw:'https://'+s,tag:'GitHub Raw',tagClass:'github',desc:'Raw 文件加速链接'}}
-  const blob=s.match(new RegExp('^github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+)$'));
+  const blob=s.match(/^github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
   if(blob)return{url:'https://'+host+'/raw/'+blob[1]+'/'+blob[2]+'/'+blob[3]+'/'+blob[4],raw:'https://'+s,tag:'GitHub Raw',tagClass:'github',desc:'文件加速链接'};
-  const rel=s.match(new RegExp('^github\.com/([^/]+)/([^/]+)/releases/download/(.+)$'));
+  const rel=s.match(/^github\.com\/([^/]+)\/([^/]+)\/releases\/download\/(.+)$/);
   if(rel)return{url:'https://'+host+'/release/'+rel[1]+'/'+rel[2]+'/releases/download/'+rel[3],raw:'https://'+s,tag:'Release',tagClass:'github',desc:'Release 下载加速链接'};
   if(s.startsWith('api.github.com/'))return{url:'https://'+host+'/api/'+s.replace('api.github.com/',''),raw:'https://'+s,tag:'GitHub API',tagClass:'github',desc:'API 加速链接'};
-  if(s.includes('registry.npmjs.org'))return{url:'https://'+host+'/npm/'+s.replace(/.*registry.npmjs.org/,''),raw:'https://'+s,tag:'NPM',tagClass:'npm',desc:'NPM 镜像链接'};
-  const npm=s.match(new RegExp('npmjs\.com/package/([^/]+)'));if(npm)return{url:'https://'+host+'/npm/'+npm[1],raw:'https://'+s,tag:'NPM',tagClass:'npm',desc:'NPM 包镜像'};
-  const pypi=s.match(new RegExp('pypi\.org/project/([^/]+)'));if(pypi)return{url:'https://'+host+'/pypi/simple/'+pypi[1]+'/',raw:'https://'+s,tag:'PyPI',tagClass:'pypi',desc:'PyPI 包镜像'};
-  const clone=s.match(new RegExp('^github\.com/([^/]+)/([^/]+)/?$'));if(clone)return{url:'https://'+host+'/clone/'+clone[1]+'/'+clone[2],raw:'https://'+s,tag:'Git Clone',tagClass:'clone',desc:'Git Clone 加速'};
+  if(s.includes('registry.npmjs.org'))return{url:'https://'+host+'/npm/'+s.replace(/.*registry\.npmjs\.org/,''),raw:'https://'+s,tag:'NPM',tagClass:'npm',desc:'NPM 镜像链接'};
+  const npm=s.match(/npmjs\.com\/package\/([^/]+)/);if(npm)return{url:'https://'+host+'/npm/'+npm[1],raw:'https://'+s,tag:'NPM',tagClass:'npm',desc:'NPM 包镜像'};
+  const pypi=s.match(/pypi\.org\/project\/([^/]+)/);if(pypi)return{url:'https://'+host+'/pypi/simple/'+pypi[1]+'/',raw:'https://'+s,tag:'PyPI',tagClass:'pypi',desc:'PyPI 包镜像'};
+  const clone=s.match(/^github\.com\/([^/]+)\/([^/]+)\/?$/);if(clone)return{url:'https://'+host+'/clone/'+clone[1]+'/'+clone[2],raw:'https://'+s,tag:'Git Clone',tagClass:'clone',desc:'Git Clone 加速'};
   if(s.startsWith('github.com/'))return{url:'https://'+host+'/'+s.replace('github.com/',''),raw:'https://'+s,tag:'GitHub',tagClass:'github',desc:'GitHub 加速'};
   return null;
 }
