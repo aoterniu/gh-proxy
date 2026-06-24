@@ -32,26 +32,15 @@ main{max-width:1000px;margin:0 auto;padding:60px 20px 40px}
 .hero h1 span{color:var(--blue)}
 .hero p{color:var(--sub);font-size:1rem;max-width:600px;margin:0 auto}
 .input-area{margin-bottom:32px}
-.input-row{display:flex;gap:12px;margin-bottom:12px}
+.input-row{display:flex;gap:12px;margin-bottom:12px;position:relative}
 .input-row input{flex:1;height:48px;padding:0 16px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;font-size:.95rem;color:var(--text);outline:none;font-family:inherit;transition:border .2s}
 .input-row input:focus{border-color:var(--blue);ring:2px var(--blue)}
 .input-row input::placeholder{color:var(--sub)}
 .input-row .go-btn{height:48px;padding:0 28px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem;transition:all .15s;white-space:nowrap}
 .input-row .go-btn:hover{opacity:.9}
 .input-row .go-btn:disabled{opacity:.5;cursor:not-allowed}
-.result-box{display:none;background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:16px;margin-top:16px}
-.result-box.show{display:block}
-.result-box .link-row{display:flex;gap:8px;align-items:center}
-.result-box .link-row input{flex:1;height:40px;padding:0 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;font-size:.85rem;color:var(--green);font-family:'JetBrains Mono',monospace}
-.result-box .link-row .copy-btn{height:40px;padding:0 16px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:.82rem;transition:all .12s;white-space:nowrap}
-.result-box .link-row .copy-btn:active{transform:scale(.95)}
-.result-box .link-row .copy-btn.ok{background:#15803d}
-.result-box .meta{display:flex;gap:16px;margin-top:10px;font-size:.82rem;color:var(--sub)}
-.result-box .meta .tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.72rem;font-weight:600}
-.result-box .meta .tag.github{background:#dbeafe;color:#2563eb}
-.result-box .meta .tag.npm{background:#dcfce7;color:#16a34a}
-.result-box .meta .tag.pypi{background:#ffedd5;color:#ea580c}
-.result-box .meta .tag.clone{background:#ede9fe;color:#7c3aed}
+.input-row .clear-btn{position:absolute;right:80px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--sub);cursor:pointer;font-size:1.1rem;display:none;padding:4px 8px}
+.input-row .clear-btn.show{display:block}
 .tabs{display:flex;gap:0;margin-top:16px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:3px;display:none}
 .tabs.show{display:flex}
 .tabs .tab{flex:1;padding:8px 12px;text-align:center;font-size:.82rem;font-weight:500;color:var(--sub);border:none;background:transparent;cursor:pointer;border-radius:6px;transition:all .15s}
@@ -122,18 +111,9 @@ footer .links{display:flex;justify-content:center;gap:16px;margin-bottom:8px}
 
   <div class="input-area">
     <div class="input-row">
-      <input type="text" id="linkInput" placeholder="输入 Github 文件链接" oninput="onInput()" onkeydown="if(event.key==='Enter')convertLink()">
+      <input type="text" id="linkInput" placeholder="粘贴 GitHub / NPM / PyPI 链接，按回车转换" oninput="onInput()" onpaste="setTimeout(convertLink,100)" onkeydown="if(event.key==='Enter')convertLink()">
+      <button class="clear-btn" id="clearBtn" onclick="clearInput()">✕</button>
       <button class="go-btn" id="goBtn" onclick="convertLink()" disabled>Go</button>
-    </div>
-    <div class="result-box" id="resultBox">
-      <div class="link-row">
-        <input type="text" id="resultLink" readonly>
-        <button class="copy-btn" id="copyBtn" onclick="copyResult()">复制</button>
-      </div>
-      <div class="meta">
-        <span class="tag" id="typeTag"></span>
-        <span id="resultDesc"></span>
-      </div>
     </div>
 
     <div class="tabs" id="tabs">
@@ -168,6 +148,7 @@ footer .links{display:flex;justify-content:center;gap:16px;margin-bottom:8px}
           <input type="text" id="cmdDirect" readonly>
           <button class="cmd-btn" onclick="copyCmd('cmdDirect')">复制</button>
           <button class="open-btn" onclick="window.open($('#cmdDirect').value,'_blank')">打开</button>
+          <button class="open-btn" onclick="dlDirect()">下载</button>
         </div>
       </div>
     </div>
@@ -222,22 +203,12 @@ function toggleTheme(){
   localStorage.setItem('gh-theme',t);
 }
 
-// 输入处理
-function onInput(){
-  const v=$('#linkInput').value.trim();
-  $('#goBtn').disabled=!v;
-}
-
 // 链接转换
 function convertLink(){
   const input=$('#linkInput').value.trim();
   if(!input){showToast('请输入链接');return}
   const result=parseLink(input);
   if(!result){showToast('无法识别该链接');return}
-  $('#resultBox').classList.add('show');
-  $('#resultLink').value=result.url;
-  const tag=$('#typeTag');tag.textContent=result.tag;tag.className='tag '+result.tagClass;
-  $('#resultDesc').textContent=result.desc;
   // 三个标签页统一使用 /https://github.com/... 格式
   const proxiedUrl='https://'+currentDomain+'/'+result.raw;
   updateTabs(proxiedUrl);
@@ -259,6 +230,31 @@ function updateTabs(url){
   $('#cmdWget').value='wget '+url;
   $('#cmdCurl').value='curl -O '+url;
   $('#cmdDirect').value=url;
+}
+
+// 清空输入框
+function clearInput(){
+  $('#linkInput').value='';
+  $('#tabs').classList.remove('show');
+  $('#tabPanels').classList.remove('show');
+  $('#clearBtn').classList.remove('show');
+  $('#goBtn').disabled=true;
+  $('#linkInput').focus();
+}
+
+// 强制下载
+function dlDirect(){
+  const url=$('#cmdDirect').value;
+  if(!url){showToast('请先输入链接');return}
+  const a=document.createElement('a');a.href=url;a.download='';a.target='_blank';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// 输入框状态
+function onInput(){
+  const v=$('#linkInput').value.trim();
+  $('#goBtn').disabled=!v;
+  $('#clearBtn').classList.toggle('show',v.length>0);
 }
 
 function copyCmd(id){
@@ -284,12 +280,6 @@ function parseLink(input){
   const clone=s.match(new RegExp('^github\.com/([^/]+)/([^/]+)/?$'));if(clone)return{url:'https://'+host+'/clone/'+clone[1]+'/'+clone[2],raw:'https://'+s,tag:'Git Clone',tagClass:'clone',desc:'Git Clone 加速'};
   if(s.startsWith('github.com/'))return{url:'https://'+host+'/'+s.replace('github.com/',''),raw:'https://'+s,tag:'GitHub',tagClass:'github',desc:'GitHub 加速'};
   return null;
-}
-function copyResult(){
-  navigator.clipboard.writeText($('#resultLink').value).then(()=>{
-    const btn=$('#copyBtn');btn.textContent='已复制 ✓';btn.classList.add('ok');showToast('✅ 已复制到剪贴板');
-    setTimeout(()=>{btn.textContent='复制';btn.classList.remove('ok')},1500);
-  });
 }
 
 function copyText(el){
