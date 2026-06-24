@@ -39,7 +39,7 @@ main{max-width:1000px;margin:0 auto;padding:60px 20px 40px}
 .input-row .go-btn{height:48px;padding:0 28px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem;transition:all .15s;white-space:nowrap}
 .input-row .go-btn:hover{opacity:.9}
 .input-row .go-btn:disabled{opacity:.5;cursor:not-allowed}
-.input-row .clear-btn{position:absolute;right:80px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--sub);cursor:pointer;font-size:1.1rem;display:none;padding:4px 8px}
+.input-row .clear-btn{background:none;border:none;color:var(--sub);cursor:pointer;font-size:1.1rem;padding:0 4px;display:none;flex-shrink:0}
 .input-row .clear-btn.show{display:block}
 .tabs{display:flex;gap:0;margin-top:16px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:3px;display:none}
 .tabs.show{display:flex}
@@ -148,13 +148,12 @@ footer .links{display:flex;justify-content:center;gap:16px;margin-bottom:8px}
           <input type="text" id="cmdDirect" readonly>
           <button class="cmd-btn" onclick="copyCmd('cmdDirect')">复制</button>
           <button class="open-btn" onclick="window.open($('#cmdDirect').value,'_blank')">打开</button>
-          <button class="open-btn" onclick="dlDirect()">下载</button>
+          <button class="open-btn" onclick="dlDirect()">下载 ZIP</button>
         </div>
       </div>
     </div>
+    <div class="hint" style="margin-top:8px">💡 提示：输入文件链接直接下载，输入仓库地址可下载 ZIP 包（main 分支）</div>
   </div>
-
-  <div class="node-bar">
     <label>节点选择：</label>
     <select id="nodeSelect">
       <option value="gh.aoterniu.online" selected>gh.aoterniu.online（默认）</option>
@@ -242,11 +241,14 @@ function clearInput(){
   $('#linkInput').focus();
 }
 
-// 强制下载
+// 强制下载（智能识别仓库地址 → ZIP 下载）
 function dlDirect(){
   const url=$('#cmdDirect').value;
   if(!url){showToast('请先输入链接');return}
-  const a=document.createElement('a');a.href=url;a.download='';a.target='_blank';
+  // 仓库地址自动转 ZIP 下载
+  const repoMatch=url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/);
+  const dlUrl=repoMatch?'https://gh.aoterniu.online/https://github.com/'+repoMatch[1]+'/'+repoMatch[2]+'/archive/refs/heads/main.zip':url;
+  const a=document.createElement('a');a.href=dlUrl;a.download='';a.target='_blank';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
