@@ -322,7 +322,38 @@ loadStats();
 </html>`;
 
 function cors(origin){return{'Access-Control-Allow-Origin':origin||'*','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Access-Control-Allow-Headers':'*'}}
-async function proxyUpstream(url,request,extraHeaders={}){const headers=new Headers();for(const[key,value]of request.headers){if(!['host','origin','referer'].includes(key.toLowerCase()))headers.set(key,value)}Object.entries(extraHeaders).forEach(([k,v])=>headers.set(k,v));const response=await fetch(new Request(url,{method:request.method,headers,body:request.method!=='GET'&&request.method!=='HEAD'?request.body:undefined}));const rh=new Headers(response.headers);rh.set('Access-Control-Allow-Origin','*');rh.set('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');rh.set('Access-Control-Allow-Headers','*');return new Response(response.body,{status:response.status,statusText:response.statusText,headers:rh})}
+async function proxyUpstream(url,request,extraHeaders={}){
+  const headers=new Headers();
+  for(const[key,value]of request.headers){if(!['host','origin','referer'].includes(key.toLowerCase()))headers.set(key,value)}
+  Object.entries(extraHeaders).forEach(([k,v])=>headers.set(k,v));
+
+  // 检查 Cloudflare 缓存（大文件加速）
+  const cache=caches.default;
+  const cacheKey=new Request(request.url,request);
+  if(request.method==='GET'){
+    const cached=await cache.match(cacheKey);
+    if(cached)return cached;
+  }
+
+  const response=await fetch(new Request(url,{method:request.method,headers,body:request.method!=='GET'&&request.method!=='HEAD'?request.body:undefined}));
+  const rh=new Headers(response.headers);
+  rh.set('Access-Control-Allow-Origin','*');
+  rh.set('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');
+  rh.set('Access-Control-Allow-Headers','*');
+
+  // 大文件缓存 1 小时，加速后续下载
+  const cl=response.headers.get('content-length');
+  if(cl&&parseInt(cl)>1024*1024)rh.set('Cache-Control','public, max-age=3600');
+
+  const resp=new Response(response.body,{status:response.status,statusText:response.statusText,headers:rh});
+
+  // 写入缓存
+  if(request.method==='GET'&&response.status===200){
+    try{await cache.put(cacheKey,resp.clone())}catch(e){}
+  }
+
+  return resp;
+}
 async function incrementStats(env){try{const today=new Date().toISOString().slice(0,10);const t=parseInt(await env.STATS.get('total')||'0')+1;const d=parseInt(await env.STATS.get('day_'+today)||'0')+1;await Promise.all([env.STATS.put('total',String(t)),env.STATS.put('day_'+today,String(d))])}catch(e){}}
 async function getStats(env){try{const today=new Date().toISOString().slice(0,10);return{total:parseInt(await env.STATS.get('total')||'0'),today:parseInt(await env.STATS.get('day_'+today)||'0')}}catch{return{total:0,today:0}}}
 
