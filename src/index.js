@@ -246,7 +246,7 @@ function dlDirect(){
   const url=$('#cmdDirect').value;
   if(!url){showToast('请先输入链接');return}
   // 仓库地址自动转 ZIP 下载
-  const repoMatch=url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/);
+  const repoMatch=url.match(new RegExp('github\\.com/([^/]+)/([^/]+?)(?:\\.git)?$'));
   const dlUrl=repoMatch?'https://gh.aoterniu.online/https://github.com/'+repoMatch[1]+'/'+repoMatch[2]+'/archive/refs/heads/main.zip':url;
   const a=document.createElement('a');a.href=dlUrl;a.download='';a.target='_blank';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
