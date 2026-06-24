@@ -52,6 +52,23 @@ main{max-width:1000px;margin:0 auto;padding:60px 20px 40px}
 .result-box .meta .tag.npm{background:#dcfce7;color:#16a34a}
 .result-box .meta .tag.pypi{background:#ffedd5;color:#ea580c}
 .result-box .meta .tag.clone{background:#ede9fe;color:#7c3aed}
+.tabs{display:flex;gap:0;margin-top:16px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:3px;display:none}
+.tabs.show{display:flex}
+.tabs .tab{flex:1;padding:8px 12px;text-align:center;font-size:.82rem;font-weight:500;color:var(--sub);border:none;background:transparent;cursor:pointer;border-radius:6px;transition:all .15s}
+.tabs .tab:hover{color:var(--text)}
+.tabs .tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tab-panels{display:none;margin-top:12px}
+.tab-panels.show{display:block}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.tab-panel .cmd-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.tab-panel .cmd-row label{font-size:.78rem;color:var(--sub);width:80px;flex-shrink:0;text-align:right}
+.tab-panel .cmd-row input{flex:1;height:36px;padding:0 10px;background:var(--card);border:1px solid var(--bdr);border-radius:6px;font-size:.8rem;color:var(--green);font-family:'JetBrains Mono',monospace}
+.tab-panel .cmd-row .cmd-btn{height:36px;padding:0 14px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;white-space:nowrap;transition:all .12s}
+.tab-panel .cmd-row .cmd-btn:active{transform:scale(.95)}
+.tab-panel .cmd-row .cmd-btn.ok{background:var(--green)}
+.tab-panel .cmd-row .open-btn{height:36px;padding:0 14px;background:transparent;color:var(--blue);border:1px solid var(--blue);border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;white-space:nowrap;transition:all .12s}
+.tab-panel .cmd-row .open-btn:hover{background:#dbeafe}
 .node-bar{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
 .node-bar label{font-size:.88rem;color:var(--sub);font-weight:500;white-space:nowrap}
 .node-bar select{height:40px;padding:0 12px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;font-size:.88rem;color:var(--text);cursor:pointer;min-width:200px}
@@ -116,6 +133,42 @@ footer .links{display:flex;justify-content:center;gap:16px;margin-bottom:8px}
       <div class="meta">
         <span class="tag" id="typeTag"></span>
         <span id="resultDesc"></span>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="git-clone" onclick="switchTab('git-clone')">Git Clone</button>
+      <button class="tab" data-tab="wget-curl" onclick="switchTab('wget-curl')">Wget &amp; Curl</button>
+      <button class="tab" data-tab="direct" onclick="switchTab('direct')">Direct Download</button>
+    </div>
+
+    <div class="tab-panels" id="tabPanels">
+      <div class="tab-panel active" id="git-clone">
+        <div class="cmd-row">
+          <label>Git Clone</label>
+          <input type="text" id="cmdGit" readonly>
+          <button class="cmd-btn" onclick="copyCmd('cmdGit')">复制</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="wget-curl">
+        <div class="cmd-row">
+          <label>Wget</label>
+          <input type="text" id="cmdWget" readonly>
+          <button class="cmd-btn" onclick="copyCmd('cmdWget')">复制</button>
+        </div>
+        <div class="cmd-row">
+          <label>Curl</label>
+          <input type="text" id="cmdCurl" readonly>
+          <button class="cmd-btn" onclick="copyCmd('cmdCurl')">复制</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="direct">
+        <div class="cmd-row">
+          <label>链接</label>
+          <input type="text" id="cmdDirect" readonly>
+          <button class="cmd-btn" onclick="copyCmd('cmdDirect')">复制</button>
+          <button class="open-btn" onclick="window.open($('#cmdDirect').value,'_blank')">打开</button>
+        </div>
       </div>
     </div>
   </div>
@@ -185,8 +238,33 @@ function convertLink(){
   $('#resultLink').value=result.url;
   const tag=$('#typeTag');tag.textContent=result.tag;tag.className='tag '+result.tagClass;
   $('#resultDesc').textContent=result.desc;
+  updateTabs(result.url);
   fetch('/api/stats/increment',{method:'POST'}).catch(()=>{});
   loadStats();
+}
+
+// 标签页切换
+function switchTab(id){
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+  document.querySelectorAll('.tab-panels .tab-panel').forEach(p=>p.classList.toggle('active',p.id===id));
+}
+
+// 更新标签页内容
+function updateTabs(url){
+  $('#tabs').classList.add('show');
+  $('#tabPanels').classList.add('show');
+  $('#cmdGit').value='git clone '+url;
+  $('#cmdWget').value='wget '+url;
+  $('#cmdCurl').value='curl -O '+url;
+  $('#cmdDirect').value=url;
+}
+
+function copyCmd(id){
+  const el=$('#'+id);
+  navigator.clipboard.writeText(el.value).then(()=>{
+    const btn=el.nextElementSibling;btn.textContent='已复制 ✓';btn.classList.add('ok');showToast('✅ 已复制到剪贴板');
+    setTimeout(()=>{btn.textContent='复制';btn.classList.remove('ok')},1500);
+  });
 }
 
 function parseLink(input){
@@ -255,4 +333,7 @@ async function proxyUpstream(url,request,extraHeaders={}){const headers=new Head
 async function incrementStats(env){try{const today=new Date().toISOString().slice(0,10);const t=parseInt(await env.STATS.get('total')||'0')+1;const d=parseInt(await env.STATS.get('day_'+today)||'0')+1;await Promise.all([env.STATS.put('total',String(t)),env.STATS.put('day_'+today,String(d))])}catch(e){}}
 async function getStats(env){try{const today=new Date().toISOString().slice(0,10);return{total:parseInt(await env.STATS.get('total')||'0'),today:parseInt(await env.STATS.get('day_'+today)||'0')}}catch{return{total:0,today:0}}}
 
-export default{async fetch(request,env){const url=new URL(request.url);const origin=request.headers.get('Origin')||'*';const path=url.pathname;if(request.method==='OPTIONS')return new Response(null,{headers:cors(origin)});if(path==='/'||path==='')return new Response(HOMEPAGE,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}});if(path==='/api/ping')return Response.json({ok:true,timestamp:Date.now()},{headers:cors(origin)});if(path==='/api/stats'&&request.method==='GET'){const s=await getStats(env);return Response.json(s,{headers:cors(origin)})}if(path==='/api/stats/increment'&&request.method==='POST'){await incrementStats(env);return Response.json({ok:true},{headers:cors(origin)})}if(path.startsWith('/npm/')){await incrementStats(env);return proxyUpstream('https://registry.npmmirror.com'+path.slice(4)+url.search,request)}if(path.startsWith('/pypi/')){await incrementStats(env);return proxyUpstream('https://mirrors.aliyun.com/pypi'+path.slice(5)+url.search,request)}if(path.startsWith('/raw/')){await incrementStats(env);return proxyUpstream('https://raw.githubusercontent.com/'+path.slice(5)+url.search,request)}if(path.startsWith('/release/')){await incrementStats(env);return proxyUpstream('https://github.com/'+path.slice(9)+url.search,request,{'User-Agent':'Mozilla/5.0'})}if(path.startsWith('/api/')&&!path.startsWith('/api/ping')&&!path.startsWith('/api/stats')){await incrementStats(env);return proxyUpstream('https://api.github.com/'+path.slice(5)+url.search,request,{'User-Agent':'gh-proxy/1.0','Accept':'application/vnd.github.v3+json'})}if(path.startsWith('/clone/')){await incrementStats(env);const gp=path.slice(7).endsWith('.git')?path.slice(7):path.slice(7)+'.git';return proxyUpstream('https://github.com/'+gp+url.search,request,{'User-Agent':'git/2.40.0'})}if(path.startsWith('/github.com/')||path.startsWith('/githubusercontent.com/')){const d=path.startsWith('/github.com/')?'github.com':'raw.githubusercontent.com';return proxyUpstream('https://'+d+'/'+path.replace('/'+d+'/','')+url.search,request,{'User-Agent':'Mozilla/5.0'})}if(path.startsWith('/pages/')){const p=path.slice(7).split('/');if(p.length>=2)return proxyUpstream('https://'+p[0]+'.github.io/'+p[1]+'/'+p.slice(2).join('/')+url.search,request)}if(path.match(/^\/[^\/]+\/[^\/]+\/(blob|raw)\/[^\/]+\//)){const p=path.slice(1).split('/');const[u,r,t,b]=p;const f=p.slice(4).join('/');if(t==='raw')await incrementStats(env);const target=t==='raw'?'https://raw.githubusercontent.com/'+u+'/'+r+'/'+b+'/'+f+url.search:'https://github.com/'+u+'/'+r+'/blob/'+b+'/'+f+url.search;return proxyUpstream(target,request,t!=='raw'?{'User-Agent':'Mozilla/5.0'}:{})}return new Response(HOMEPAGE,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}})}};
+export default{async fetch(request,env){const url=new URL(request.url);const origin=request.headers.get('Origin')||'*';const path=url.pathname;if(request.method==='OPTIONS')return new Response(null,{headers:cors(origin)});if(path==='/'||path==='')return new Response(HOMEPAGE,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}});if(path==='/api/ping')return Response.json({ok:true,timestamp:Date.now()},{headers:cors(origin)});if(path==='/api/stats'&&request.method==='GET'){const s=await getStats(env);return Response.json(s,{headers:cors(origin)})}if(path==='/api/stats/increment'&&request.method==='POST'){await incrementStats(env);return Response.json({ok:true},{headers:cors(origin)})}if(path.startsWith('/npm/')){await incrementStats(env);return proxyUpstream('https://registry.npmmirror.com'+path.slice(4)+url.search,request)}if(path.startsWith('/pypi/')){await incrementStats(env);return proxyUpstream('https://mirrors.aliyun.com/pypi'+path.slice(5)+url.search,request)}if(path.startsWith('/raw/')){await incrementStats(env);return proxyUpstream('https://raw.githubusercontent.com/'+path.slice(5)+url.search,request)}if(path.startsWith('/release/')){await incrementStats(env);return proxyUpstream('https://github.com/'+path.slice(9)+url.search,request,{'User-Agent':'Mozilla/5.0'})}if(path.startsWith('/api/')&&!path.startsWith('/api/ping')&&!path.startsWith('/api/stats')){await incrementStats(env);return proxyUpstream('https://api.github.com/'+path.slice(5)+url.search,request,{'User-Agent':'gh-proxy/1.0','Accept':'application/vnd.github.v3+json'})}if(path.startsWith('/clone/')){await incrementStats(env);const gp=path.slice(7).endsWith('.git')?path.slice(7):path.slice(7)+'.git';return proxyUpstream('https://github.com/'+gp+url.search,request,{'User-Agent':'git/2.40.0'})}if(path.startsWith('/github.com/')||path.startsWith('/githubusercontent.com/')){const d=path.startsWith('/github.com/')?'github.com':'raw.githubusercontent.com';return proxyUpstream('https://'+d+'/'+path.replace('/'+d+'/','')+url.search,request,{'User-Agent':'Mozilla/5.0'})}if(path.startsWith('/pages/')){const p=path.slice(7).split('/');if(p.length>=2)return proxyUpstream('https://'+p[0]+'.github.io/'+p[1]+'/'+p.slice(2).join('/')+url.search,request)}if(path.match(/^\/[^\/]+\/[^\/]+\/(blob|raw)\/[^\/]+\//)){const p=path.slice(1).split('/');const[u,r,t,b]=p;const f=p.slice(4).join('/');if(t==='raw')await incrementStats(env);const target=t==='raw'?'https://raw.githubusercontent.com/'+u+'/'+r+'/'+b+'/'+f+url.search:'https://github.com/'+u+'/'+r+'/blob/'+b+'/'+f+url.search;return proxyUpstream(target,request,t!=='raw'?{'User-Agent':'Mozilla/5.0'}:{})}
+// /https://github.com/... 通用代理（支持 Git Clone、Wget、Curl、直接下载）
+if(path.startsWith('/https://')||path.startsWith('/http://')){await incrementStats(env);const targetUrl=path.substring(1);const extra=targetUrl.includes('raw.githubusercontent.com')?{}:{'User-Agent':'Mozilla/5.0'};return proxyUpstream(targetUrl+url.search,request,extra)}
+return new Response(HOMEPAGE,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}})}};
