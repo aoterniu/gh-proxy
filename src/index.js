@@ -327,7 +327,7 @@ async function proxyUpstream(url,request,extraHeaders={}){
   for(const[key,value]of request.headers){if(!['host','origin','referer'].includes(key.toLowerCase()))headers.set(key,value)}
   Object.entries(extraHeaders).forEach(([k,v])=>headers.set(k,v));
 
-  // 检查 Cloudflare 缓存（大文件加速）
+  // Cloudflare Cache API
   const cache=caches.default;
   const cacheKey=new Request(request.url,request);
   if(request.method==='GET'){
@@ -341,10 +341,25 @@ async function proxyUpstream(url,request,extraHeaders={}){
   rh.set('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');
   rh.set('Access-Control-Allow-Headers','*');
 
-  // 大文件缓存 1 小时，加速后续下载
-  const cl=response.headers.get('content-length');
-  if(cl&&parseInt(cl)>1024*1024)rh.set('Cache-Control','public, max-age=3600');
+  const size=parseInt(response.headers.get('content-length')||'0');
 
+  // 大文件 (>10MB) 直接 302 重定向到 GitHub 原始地址，绕过 Worker
+  if(size>10*1024*1024){
+    return Response.redirect(url,302);
+  }
+
+  // 激进缓存策略
+  const isRelease=url.includes('/releases/download/')||url.includes('/archive/');
+  const isSmall=size<1024*1024;
+  if(isRelease){
+    rh.set('Cache-Control','public, max-age=2592000'); // Release 文件缓存 30 天
+  }else if(isSmall){
+    rh.set('Cache-Control','public, max-age=86400'); // 小文件 24 小时
+  }else{
+    rh.set('Cache-Control','public, max-age=604800'); // 大文件 7 天
+  }
+
+  // 流式传输（response.body 已经是 ReadableStream，直接透传）
   const resp=new Response(response.body,{status:response.status,statusText:response.statusText,headers:rh});
 
   // 写入缓存
