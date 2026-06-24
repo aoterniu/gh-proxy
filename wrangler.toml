@@ -6,3 +6,7 @@ workers_dev = false
 routes = [
   { pattern = "gh.aoterniu.online/*", zone_name = "aoterniu.online" }
 ]
+
+[[kv_namespaces]]
+binding = "STATS"
+id = "ff82df4e39aa43eba3c7006d32a7fd61"
